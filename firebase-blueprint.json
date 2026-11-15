@@ -1,0 +1,164 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A registered student or administrator account in CampusConnect.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Authentication user ID.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of the student or administrator.",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address used for authentication.",
+          "maxLength": 160
+        },
+        "college": {
+          "type": "string",
+          "description": "Name of the student's college or university.",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "semester": {
+          "type": "string",
+          "description": "Current semester (1 to 8).",
+          "enum": ["1", "2", "3", "4", "5", "6", "7", "8"]
+        },
+        "role": {
+          "type": "string",
+          "description": "Account role; student accounts are enforced on registration.",
+          "enum": ["student", "admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the user registered."
+        }
+      },
+      "required": ["uid", "fullName", "email", "college", "semester", "role", "createdAt"]
+    },
+    "Resource": {
+      "title": "Resource",
+      "description": "A study material PDF uploaded by a student and moderated by admin.",
+      "type": "object",
+      "properties": {
+        "resourceId": {
+          "type": "string",
+          "description": "Firestore document ID for the resource.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the study material.",
+          "minLength": 3,
+          "maxLength": 150
+        },
+        "subject": {
+          "type": "string",
+          "description": "Academic subject name.",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "semester": {
+          "type": "string",
+          "description": "Target semester (1 to 8).",
+          "enum": ["1", "2", "3", "4", "5", "6", "7", "8"]
+        },
+        "category": {
+          "type": "string",
+          "description": "Resource type category.",
+          "enum": ["Notes", "Assignments", "Question Papers", "Study Materials"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Short summary of topics covered in the PDF.",
+          "minLength": 5,
+          "maxLength": 1000
+        },
+        "fileURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "Download URL from Firebase Storage.",
+          "maxLength": 2048
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Original PDF file name.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "Path inside Firebase Storage bucket for cleanup on deletion.",
+          "maxLength": 400
+        },
+        "fileSize": {
+          "type": "number",
+          "description": "PDF size in bytes (max 10 MB)."
+        },
+        "uploadedBy": {
+          "type": "string",
+          "description": "UID of the student who uploaded the resource.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "uploaderName": {
+          "type": "string",
+          "description": "Display name of the uploader.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "description": "Moderation approval state.",
+          "enum": ["pending", "approved", "rejected"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when uploaded."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when last updated."
+        }
+      },
+      "required": [
+        "resourceId",
+        "title",
+        "subject",
+        "semester",
+        "category",
+        "description",
+        "fileURL",
+        "fileName",
+        "uploadedBy",
+        "uploaderName",
+        "status",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/USERS/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores student and administrator profiles keyed by Firebase Auth UID."
+    },
+    "/RESOURCES/{resourceId}": {
+      "schema": { "$ref": "#/entities/Resource" },
+      "description": "Stores uploaded study resource metadata and approval statuses."
+    }
+  }
+}

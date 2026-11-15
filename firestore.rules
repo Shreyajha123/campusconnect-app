@@ -1,0 +1,164 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email != null && request.auth.token.email.lower() == 'eng25cs0761@dsu.edu.in';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidSemester(sem) {
+      return sem is string && sem in ['1', '2', '3', '4', '5', '6', '7', '8'];
+    }
+
+    function isValidCategory(cat) {
+      return cat is string && cat in ['Notes', 'Assignments', 'Question Papers', 'Study Materials'];
+    }
+
+    function isValidStatus(status) {
+      return status is string && status in ['pending', 'approved', 'rejected'];
+    }
+
+    function isValidUserPayload(data, userId) {
+      return data.keys().hasAll(['uid', 'fullName', 'email', 'college', 'semester', 'role', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'fullName', 'email', 'college', 'semester', 'role', 'createdAt'])
+        && data.uid == userId
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 100
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+        && data.college is string && data.college.size() >= 2 && data.college.size() <= 160
+        && isValidSemester(data.semester)
+        && data.role is string && data.role in ['student', 'admin'];
+    }
+
+    function isValidResourcePayload(data, resourceId) {
+      return data.keys().hasAll([
+          'resourceId', 'title', 'subject', 'semester', 'category',
+          'description', 'fileURL', 'fileName', 'uploadedBy', 'uploaderName',
+          'status', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'resourceId', 'title', 'subject', 'semester', 'category',
+          'description', 'fileURL', 'fileName', 'fileType', 'fileStorageType',
+          'storagePath', 'fileSize', 'uploadedBy', 'uploaderName', 'status',
+          'createdAt', 'updatedAt'
+        ])
+        && data.resourceId == resourceId
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 150
+        && data.subject is string && data.subject.size() >= 2 && data.subject.size() <= 100
+        && isValidSemester(data.semester)
+        && isValidCategory(data.category)
+        && data.description is string && data.description.size() >= 5 && data.description.size() <= 1000
+        && data.fileURL is string && data.fileURL.size() >= 5 && data.fileURL.size() <= 950000
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 200
+        && (!('fileType' in data) || (data.fileType is string && data.fileType.size() <= 100))
+        && (!('fileStorageType' in data) || (data.fileStorageType is string && data.fileStorageType in ['firestore', 'local']))
+        && (!('storagePath' in data) || (data.storagePath is string && data.storagePath.size() <= 400))
+        && (!('fileSize' in data) || (data.fileSize is number && data.fileSize > 0 && data.fileSize <= 10485760))
+        && data.uploadedBy is string && data.uploadedBy.size() >= 1 && data.uploadedBy.size() <= 128
+        && data.uploaderName is string && data.uploaderName.size() >= 1 && data.uploaderName.size() <= 100
+        && isValidStatus(data.status);
+    }
+
+    // USERS Collection
+    match /USERS/{userId} {
+      // Only the profile owner or admin can read PII user documents
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+
+      // Students can create only their own profile with role locked to 'student'.
+      // Only eng25cs0761@dsu.edu.in can hold role 'admin'.
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserPayload(request.resource.data, userId)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt == request.time
+        && (
+          request.resource.data.role == 'student' ||
+          (isAdmin() && request.resource.data.role == 'admin')
+        );
+
+      // Students can edit only their own name, college, semester (never role/uid/email/createdAt)
+      allow update: if isValidId(userId)
+        && isValidUserPayload(request.resource.data, userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          isAdmin() ||
+          (
+            isOwner(userId)
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'college', 'semester'])
+          )
+        );
+
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // RESOURCES Collection
+    match /RESOURCES/{resourceId} {
+      // Public/Students can read ONLY approved resources; Uploader and Admin can read pending/rejected
+      allow get: if isValidId(resourceId) && (
+        resource.data.status == 'approved' ||
+        (isSignedIn() && resource.data.uploadedBy == request.auth.uid) ||
+        isAdmin()
+      );
+
+      allow list: if
+        resource.data.status == 'approved' ||
+        (isSignedIn() && resource.data.uploadedBy == request.auth.uid) ||
+        isAdmin();
+
+      // Only authenticated users can create resources under their own UID, always starting as 'pending' (or admin)
+      allow create: if isValidId(resourceId)
+        && isSignedIn()
+        && isValidResourcePayload(request.resource.data, resourceId)
+        && request.resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && (request.resource.data.status == 'pending' || isAdmin());
+
+      // Owners can edit metadata (title, subject, semester, category, description);
+      // Only Admin can change status (approve / reject) or moderate any resource.
+      allow update: if isValidId(resourceId)
+        && isSignedIn()
+        && isValidResourcePayload(request.resource.data, resourceId)
+        && request.resource.data.resourceId == resource.data.resourceId
+        && request.resource.data.uploadedBy == resource.data.uploadedBy
+        && request.resource.data.fileURL == resource.data.fileURL
+        && request.resource.data.fileName == resource.data.fileName
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          isAdmin() ||
+          (
+            resource.data.uploadedBy == request.auth.uid
+            && request.resource.data.status == resource.data.status
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'title', 'subject', 'semester', 'category', 'description', 'updatedAt'
+            ])
+          )
+        );
+
+      // Only the resource owner or Admin can delete
+      allow delete: if isValidId(resourceId) && isSignedIn() && (
+        resource.data.uploadedBy == request.auth.uid || isAdmin()
+      );
+    }
+  }
+}

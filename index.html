@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CampusConnect — Student Notes &amp; Resource Sharing Platform</title>
+    <meta
+      name="description"
+      content="CampusConnect helps college students share, upload, search, and download lecture notes, assignments, question papers, and study materials."
+    />
+    <meta property="og:title" content="CampusConnect — Student Notes &amp; Resource Sharing Platform" />
+    <meta
+      property="og:description"
+      content="Your Knowledge, Your Community. Peer-shared college notes, question papers, and study materials."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <!-- Top Setup Notice (automatically hidden once firebaseConfig is filled in) -->
+    <div id="firebase-setup-banner" class="setup-banner hidden" role="region" aria-label="Firebase setup notice">
+      <div class="container setup-banner-inner">
+        <p id="firebase-banner-message">
+          Firebase is using placeholder credentials. Paste your project's <code>firebaseConfig</code> in
+          <code>js/firebase-config.js</code> to activate Authentication, Firestore, and PDF Storage.
+        </p>
+        <a href="#about" class="setup-banner-link">Setup Guide</a>
+      </div>
+    </div>
+
+    <!-- Top Navigation Bar (3-Zone Contract) -->
+    <header class="site-header">
+      <div class="container header-inner">
+        <!-- Zone 1: Brand Wordmark -->
+        <a href="#home" class="brand-logo" aria-label="CampusConnect Home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
+          </span>
+          <span class="brand-text">CampusConnect</span>
+        </a>
+
+        <!-- Zone 2: Single-Line Navigation Links -->
+        <nav class="main-nav" aria-label="Primary Navigation">
+          <a href="#home" class="nav-link" data-route="home">Home</a>
+          <a href="#about" class="nav-link" data-route="about">About</a>
+          <a href="#resources" class="nav-link" data-route="resources">Resources</a>
+          <a href="#dashboard" class="nav-link nav-auth-only hidden" data-route="dashboard">Dashboard</a>
+          <a href="#upload" class="nav-link nav-auth-only hidden" data-route="upload">Upload Notes</a>
+          <a href="#my-uploads" class="nav-link nav-auth-only hidden" data-route="my-uploads">My Uploads</a>
+          <a href="#admin" class="nav-link nav-admin-only hidden" data-route="admin">Admin</a>
+          <a href="#login" class="nav-link nav-guest-only" data-route="login">Login</a>
+        </nav>
+
+        <!-- Zone 3: Primary Action -->
+        <div class="header-actions">
+          <a href="#register" class="btn btn-primary btn-sm nav-guest-only" data-route="register">Register</a>
+          <div class="account-controls nav-auth-only hidden">
+            <span id="nav-user-name" class="nav-user-label">Student</span>
+            <button type="button" class="btn btn-secondary btn-sm js-logout-btn">Logout</button>
+          </div>
+          <button
+            type="button"
+            id="mobile-menu-toggle"
+            class="mobile-menu-btn"
+            aria-label="Toggle navigation menu"
+            aria-expanded="false"
+            aria-controls="mobile-nav-drawer"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Responsive Mobile Drawer -->
+      <nav id="mobile-nav-drawer" class="mobile-drawer hidden" aria-label="Mobile Navigation">
+        <a href="#home" class="mobile-nav-link" data-route="home">Home</a>
+        <a href="#about" class="mobile-nav-link" data-route="about">About</a>
+        <a href="#resources" class="mobile-nav-link" data-route="resources">Resources</a>
+        <a href="#dashboard" class="mobile-nav-link nav-auth-only hidden" data-route="dashboard">Dashboard</a>
+        <a href="#upload" class="mobile-nav-link nav-auth-only hidden" data-route="upload">Upload Notes</a>
+        <a href="#my-uploads" class="mobile-nav-link nav-auth-only hidden" data-route="my-uploads">My Uploads</a>
+        <a href="#admin" class="mobile-nav-link nav-admin-only hidden" data-route="admin">Admin Dashboard</a>
+        <div class="mobile-drawer-divider"></div>
+        <a href="#login" class="mobile-nav-link nav-guest-only" data-route="login">Login</a>
+        <a href="#register" class="btn btn-primary nav-guest-only" data-route="register">Register Account</a>
+        <button type="button" class="btn btn-secondary nav-auth-only hidden js-logout-btn">Logout</button>
+      </nav>
+    </header>
+
+    <main id="app-main">
+      <!-- ================================================================ -->
+      <!-- 1. HOME VIEW                                                     -->
+      <!-- ================================================================ -->
+      <section id="view-home" class="app-view">
+        <div class="hero-section">
+          <div class="container hero-grid">
+            <div class="hero-content">
+              <p class="eyebrow-text">Academic Resource Network for College Students</p>
+              <h1 class="hero-title">Your Knowledge, Your Community.</h1>
+              <p class="hero-subtitle">
+                CampusConnect brings together verified lecture notes, semester assignments, previous question papers, and
+                study guides shared directly by students across colleges. Search by subject, filter by semester, and
+                download PDFs in seconds.
+              </p>
+              <div class="hero-cta-row">
+                <a href="#resources" class="btn btn-primary btn-lg">Explore Notes</a>
+                <a href="#upload" class="btn btn-secondary btn-lg">Share Study Material</a>
+              </div>
+              <div class="hero-trust-row">
+                <div class="trust-item">
+                  <strong>8 Semesters</strong>
+                  <span>Organized curriculum</span>
+                </div>
+                <div class="trust-divider" aria-hidden="true"></div>
+                <div class="trust-item">
+                  <strong>PDF Verified</strong>
+                  <span>Up to 10 MB uploads</span>
+                </div>
+                <div class="trust-divider" aria-hidden="true"></div>
+                <div class="trust-item">
+                  <strong>Peer &amp; Admin Reviewed</strong>
+                  <span>Quality moderated</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-media-frame">
+              <img
+                src="/images/campus_hero_study.jpg"
+                alt="College students collaborating with laptops and notebooks in a bright university library lounge"
+                class="hero-image"
+                referrerpolicy="no-referrer"
+                onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+              />
+              <div class="media-fallback hidden" aria-hidden="true">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                <span>CampusConnect Academic Library</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- How It Works Strip -->
+        <div class="section-band section-tinted">
+          <div class="container">
+            <div class="section-header-row">
+              <div>
+                <h2 class="section-title">Built for Collaborative Semester Prep</h2>
+                <p class="section-subtitle">A structured workflow from student contribution to peer download.</p>
+              </div>
+            </div>
+            <div class="steps-grid">
+              <div class="step-card">
+                <span class="step-index">01. Register Your Semester</span>
+                <h3>Create a verified student profile</h3>
+                <p>Sign up with your college name and current semester (1 to 8) to track uploads and access tailored study materials.</p>
+              </div>
+              <div class="step-card">
+                <span class="step-index">02. Upload &amp; Share PDFs</span>
+                <h3>Contribute notes &amp; question papers</h3>
+                <p>Upload PDFs up to 10 MB categorized by Notes, Assignments, Question Papers, or Study Materials with live upload progress.</p>
+              </div>
+              <div class="step-card">
+                <span class="step-index">03. Moderated Quality</h3>
+                <h3>Admin-reviewed before publishing</h3>
+                <p>Every uploaded resource is reviewed by an administrator so only accurate, clean materials appear in public search.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Popular Subjects -->
+        <div class="section-band">
+          <div class="container">
+            <div class="section-header-row">
+              <div>
+                <h2 class="section-title">Popular Subjects</h2>
+                <p class="section-subtitle">Select any subject to filter approved study materials immediately.</p>
+              </div>
+              <a href="#resources" class="text-link">Browse all subjects &rarr;</a>
+            </div>
+            <div id="home-popular-subjects" class="subjects-grid"></div>
+          </div>
+        </div>
+
+        <!-- Recently Uploaded Resources -->
+        <div class="section-band section-tinted">
+          <div class="container">
+            <div class="section-header-row">
+              <div>
+                <h2 class="section-title">Recently Uploaded Resources</h2>
+                <p class="section-subtitle">Latest approved PDF notes and question papers shared by students.</p>
+              </div>
+              <a href="#resources" class="btn btn-secondary btn-sm">View All Resources</a>
+            </div>
+            <div id="home-recent-resources" class="resources-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- 2. ABOUT & FIREBASE SETUP GUIDE VIEW                             -->
+      <!-- ================================================================ -->
+      <section id="view-about" class="app-view hidden">
+        <div class="container page-container">
+          <div class="about-hero-grid">
+            <div>
+              <p class="eyebrow-text">About CampusConnect</p>
+              <h1 class="page-title">Open Academic Sharing Built for College Campuses</h1>
+              <p class="page-lead">
+                CampusConnect is a student-first study repository designed to eliminate scattered chat-group PDFs and lost
+                lecture handouts. Every resource is tagged by Subject, Semester, and Category so students find exam-ready
+                materials fast.
+              </p>
+              <div class="about-highlights">
+                <div class="about-point">
+                  <h3>Role-Protected Moderation</h3>
+                  <p>
+                    Students upload and manage their own PDFs, while only authorized administrators can approve, reject,
+                    or remove inappropriate submissions.
+                  </p>
+                </div>
+                <div class="about-point">
+                  <h3>Pure Web Standards + Firebase</h3>
+                  <p>
+                    Built with semantic HTML5, responsive CSS3, modular JavaScript, and powered by Firebase
+                    Authentication, Cloud Firestore, and Firebase Storage.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="about-media-frame">
+              <img
+                src="/images/campus_notes_workspace.jpg"
+                alt="Organized college student desk with textbooks, lecture notes, and laptop"
+                class="about-image"
+                referrerpolicy="no-referrer"
+                onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+              />
+              <div class="media-fallback hidden" aria-hidden="true">
+                <span>CampusConnect Study Workspace</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Firebase Setup Guide Card -->
+          <div class="setup-guide-card">
+            <div class="setup-guide-header">
+              <h2>How to Connect Your Firebase Project</h2>
+              <p>Follow these steps to connect Authentication, Firestore, and Storage to this website.</p>
+            </div>
+            <ol class="setup-steps-list">
+              <li>
+                <strong>Create a Firebase Project:</strong> Visit
+                <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">Firebase Console</a>,
+                click <em>Create a project</em>, and enter a project name such as <code>campusconnect-app</code>.
+              </li>
+              <li>
+                <strong>Register a Web App &amp; Copy Config:</strong> In Project Overview, click the Web icon
+                (<code>&lt;/&gt;</code>), register your app, and copy the <code>firebaseConfig</code> object. Paste it
+                at the top of <code>js/firebase-config.js</code>.
+              </li>
+              <li>
+                <strong>Enable Email/Password Authentication:</strong> Go to <em>Build &rarr; Authentication &rarr; Sign-in
+                method</em> and enable <strong>Email/Password</strong>. In the <em>Users</em> tab, add
+                <code>eng25cs0761@dsu.edu.in</code> with your chosen admin password.
+              </li>
+              <li>
+                <strong>Enable Cloud Firestore &amp; Rules:</strong> Go to <em>Build &rarr; Firestore Database &rarr; Create
+                database</em>, then paste the contents of <code>firestore.rules</code> into the <em>Rules</em> tab and
+                click <strong>Publish</strong>. Uploaded images and notes are saved directly as Base64 in Firestore—no
+                Firebase Storage setup required.
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- 3. BROWSE RESOURCES VIEW                                         -->
+      <!-- ================================================================ -->
+      <section id="view-resources" class="app-view hidden">
+        <div class="container page-container">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Browse Study Resources</h1>
+              <p class="page-lead">Search and download approved notes, assignments, and past question papers.</p>
+            </div>
+            <a href="#upload" class="btn btn-primary">Upload New PDF</a>
+          </div>
+
+          <!-- Filter Toolbar -->
+          <div class="filter-panel">
+            <div class="filter-controls-grid">
+              <div class="filter-field filter-search-field">
+                <label for="filter-search" class="sr-only">Search resources</label>
+                <div class="search-input-wrap">
+                  <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="search"
+                    id="filter-search"
+                    class="form-input search-input"
+                    placeholder="Search by title, subject, keyword, or uploader..."
+                  />
+                </div>
+              </div>
+
+              <div class="filter-field">
+                <label for="filter-subject" class="sr-only">Filter by Subject</label>
+                <select id="filter-subject" class="form-select">
+                  <option value="">All Subjects</option>
+                </select>
+              </div>
+
+              <div class="filter-field">
+                <label for="filter-semester" class="sr-only">Filter by Semester</label>
+                <select id="filter-semester" class="form-select">
+                  <option value="">All Semesters</option>
+                  <option value="1">Semester 1</option>
+                  <option value="2">Semester 2</option>
+                  <option value="3">Semester 3</option>
+                  <option value="4">Semester 4</option>
+                  <option value="5">Semester 5</option>
+                  <option value="6">Semester 6</option>
+                  <option value="7">Semester 7</option>
+                  <option value="8">Semester 8</option>
+                </select>
+              </div>
+
+              <div class="filter-field">
+                <label for="filter-category" class="sr-only">Filter by Category</label>
+                <select id="filter-category" class="form-select">
+                  <option value="">All Categories</option>
+                  <option value="Notes">Notes</option>
+                  <option value="Assignments">Assignments</option>
+                  <option value="Question Papers">Question Papers</option>
+                  <option value="Study Materials">Study Materials</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-bottom-row">
+              <div class="segmented-tabs" role="tablist" aria-label="Category filter">
+                <button type="button" class="segmented-tab category-tab-btn is-active" data-category="">All</button>
+                <button type="button" class="segmented-tab category-tab-btn" data-category="Notes">Notes</button>
+                <button type="button" class="segmented-tab category-tab-btn" data-category="Assignments">Assignments</button>
+                <button type="button" class="segmented-tab category-tab-btn" data-category="Question Papers">Question Papers</button>
+                <button type="button" class="segmented-tab category-tab-btn" data-category="Study Materials">Study Materials</button>
+              </div>
+
+              <div class="filter-status-actions">
+                <span id="browse-result-count" class="result-count-text tabular-nums">Loading...</span>
+                <button type="button" id="filter-reset-btn" class="btn btn-ghost btn-sm">Reset Filters</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results Grid -->
+          <div id="browse-resources-grid" class="resources-grid"></div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- 4. STUDENT LOGIN VIEW                                            -->
+      <!-- ================================================================ -->
+      <section id="view-login" class="app-view hidden">
+        <div class="container auth-container">
+          <div class="auth-card">
+            <div class="auth-card-header">
+              <h1>Sign In to CampusConnect</h1>
+              <p>Access your student dashboard, upload study notes, and manage your resources.</p>
+            </div>
+
+            <div id="login-alert" class="form-alert hidden" role="alert"></div>
+
+            <form id="login-form" class="stacked-form" novalidate>
+              <div class="form-group">
+                <label for="login-email" class="form-label">Email Address</label>
+                <input
+                  type="email"
+                  id="login-email"
+                  class="form-input"
+                  placeholder="student@college.edu"
+                  autocomplete="email"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="login-password" class="form-label">Password</label>
+                <input
+                  type="password"
+                  id="login-password"
+                  class="form-input"
+                  placeholder="Enter your password"
+                  autocomplete="current-password"
+                  required
+                />
+              </div>
+
+              <button type="submit" id="login-submit-btn" class="btn btn-primary btn-full">
+                Sign In
+              </button>
+            </form>
+
+            <div class="auth-card-footer">
+              <p>New to CampusConnect? <a href="#register" class="text-link">Create a student account</a></p>
+              <p class="auth-hint-note">Administrators sign in using <code>eng25cs0761@dsu.edu.in</code>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- 5. STUDENT REGISTRATION VIEW                                     -->
+      <!-- ================================================================ -->
+      <section id="view-register" class="app-view hidden">
+        <div class="container auth-container">
+          <div class="auth-card auth-card-wide">
+            <div class="auth-card-header">
+              <h1>Create Student Account</h1>
+              <p>Join your college community to upload, share, and download verified study resources.</p>
+            </div>
+
+            <div id="register-alert" class="form-alert hidden" role="alert"></div>
+
+            <form id="register-form" class="stacked-form" novalidate>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="reg-fullname" class="form-label">Full Name</label>
+                  <input
+                    type="text"
+                    id="reg-fullname"
+                    class="form-input"
+                    placeholder="e.g. Ananya Sharma"
+                    autocomplete="name"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="reg-email" class="form-label">Student Email</label>
+                  <input
+                    type="email"
+                    id="reg-email"
+                    class="form-input"
+                    placeholder="ananya@college.edu"
+                    autocomplete="email"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="reg-college" class="form-label">College Name</label>
+                  <input
+                    type="text"
+                    id="reg-college"
+                    class="form-input"
+                    placeholder="e.g. National Institute of Technology"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="reg-semester" class="form-label">Semester</label>
+                  <select id="reg-semester" class="form-select" required>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                    <option value="3">Semester 3</option>
+                    <option value="4">Semester 4</option>
+                    <option value="5">Semester 5</option>
+                    <option value="6">Semester 6</option>
+                    <option value="7">Semester 7</option>
+                    <option value="8">Semester 8</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="reg-password" class="form-label">Password</label>
+                  <input
+                    type="password"
+                    id="reg-password"
+                    class="form-input"
+                    placeholder="At least 6 characters"
+                    autocomplete="new-password"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="reg-confirm-password" class="form-label">Confirm Password</label>
+                  <input
+                    type="password"
+                    id="reg-confirm-password"
+                    class="form-input"
+                    placeholder="Re-enter password"
+                    autocomplete="new-password"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" id="reg-submit-btn" class="btn btn-primary btn-full">
+                Create Student Account
+              </button>
+            </form>
+
+            <div class="auth-card-footer">
+              <p>Already have an account? <a href="#login" class="text-link">Sign in here</a></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- 6. STUDENT DASHBOARD VIEW                                        -->
+      <!-- ================================================================ -->
+      <section id="view-dashboard" class="app-view hidden">
+        <div class="container page-container">
+          <div class="dashboard-welcome-banner">
+            <div>
+              <h1 id="dash-student-name" class="page-title">Welcome back, Student</h1>
+              <p id="dash-student-meta" class="page-lead">Loading your campus profile...</p>
+            </div>
+            <div class="dashboard-quick-actions">
+              <a href="#upload" class="btn btn-primary">Upload Notes</a>
+              <a href="#resources" class="btn btn-secondary">Browse Resources</a>
+              <a href="#my-uploads" class="btn btn-secondary">My Uploads</a>
+            </div>
+          </div>
+
+          <!-- KPI Metrics Strip -->
+          <div class="kpi-grid kpi-grid-3">
+            <div class="kpi-card">
+              <span class="kpi-label">Total Available Notes</span>
+              <strong id="dash-total-notes" class="kpi-value tabular-nums">0</strong>
+              <span class="kpi-caption">Approved materials ready to download</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Uploaded By Me</span>
+              <strong id="dash-my-uploads" class="kpi-value tabular-nums">0</strong>
+              <span class="kpi-caption">Total resources you contributed</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Pending Approval</span>
+              <strong id="dash-my-pending" class="kpi-value tabular-nums">0</strong>
+              <span class="kpi-caption">Awaiting administrator review</span>
+            </div>
+          </div>
+
+          <!-- Recently Uploaded Resources -->
+          <div class="dashboard-section">
+            <div class="section-header-row">
+              <div>
+                <h2 class="section-title">Recently Uploaded Resources</h2>
+                <p class="section-subtitle">Fresh approved study materials from across your campus community.</p>
+              </div>
+              <a href="#resources" class="text-link">Explore all notes &rarr;</a>
+            </div>
+            <div id="dash-recent-list" class="resources-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- 7. UPLOAD NOTES VIEW                                             -->
+      <!-- ================================================================ -->
+      <section id="view-upload" class="app-view hidden">
+        <div class="container page-container narrow-container">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">Upload Study Material</h1>
+              <p class="page-lead">
+                Share a PDF or study image (up to 10 MB). Submissions save instantly and are reviewed by an admin before becoming publicly visible.
+              </p>
+            </div>
+            <a href="#my-uploads" class="btn btn-secondary btn-sm">View My Uploads</a>
+          </div>
+
+          <div class="surface-card">
+            <div id="upload-alert" class="form-alert hidden" role="alert"></div>
+
+            <form id="upload-form" class="stacked-form" novalidate>
+              <div class="form-group">
+                <label for="upload-title" class="form-label">Resource Title</label>
+                <input
+                  type="text"
+                  id="upload-title"
+                  class="form-input"
+                  placeholder="e.g. Unit 3 Trees &amp; Graphs Lecture Notes"
+                  maxlength="150"
+                  required
+                />
+              </div>
+
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label for="upload-subject" class="form-label">Subject Name</label>
+                  <input
+                    type="text"
+                    id="upload-subject"
+                    class="form-input"
+                    placeholder="e.g. Data Structures"
+                    maxlength="100"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="upload-semester" class="form-label">Semester</label>
+                  <select id="upload-semester" class="form-select" required>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                    <option value="3">Semester 3</option>
+                    <option value="4">Semester 4</option>
+                    <option value="5">Semester 5</option>
+                    <option value="6">Semester 6</option>
+                    <option value="7">Semester 7</option>
+                    <option value="8">Semester 8</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="upload-category" class="form-label">Category</label>
+                  <select id="upload-category" class="form-select" required>
+                    <option value="Notes">Notes</option>
+                    <option value="Assignments">Assignments</option>
+                    <option value="Question Papers">Question Papers</option>
+                    <option value="Study Materials">Study Materials</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="upload-description" class="form-label">Description</label>
+                <textarea
+                  id="upload-description"
+                  class="form-textarea"
+                  rows="3"
+                  maxlength="1000"
+                  placeholder="Summarize the chapters, exam units, or key concepts covered in this PDF..."
+                  required
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="upload-file" class="form-label">Study File (PDF or Image, Max 10 MB)</label>
+                <div id="upload-dropzone" class="file-dropzone">
+                  <input
+                    type="file"
+                    id="upload-file"
+                    class="file-input-overlay"
+                    accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+                  />
+                  <div class="dropzone-content">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <p class="dropzone-title">Drag and drop your PDF or image here, or click to browse</p>
+                    <p id="upload-file-selected" class="dropzone-hint">No file selected yet (PDF or Image up to 10 MB)</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Instant Save Progress Bar -->
+              <div id="upload-progress-wrap" class="upload-progress-wrap hidden">
+                <div class="upload-progress-header">
+                  <span>Encoding &amp; saving to Firestore...</span>
+                  <span id="upload-progress-text" class="tabular-nums">0%</span>
+                </div>
+                <div class="progress-track">
+                  <div id="upload-progress-bar" class="progress-fill" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div class="form-actions-end">
+                <a href="#dashboard" class="btn btn-secondary">Cancel</a>
+                <button type="submit" id="upload-submit-btn" class="btn btn-primary">
+                  Upload Study Material
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- 8. MY UPLOADS VIEW                                               -->
+      <!-- ================================================================ -->
+      <section id="view-my-uploads" class="app-view hidden">
+        <div class="container page-container">
+          <div class="page-header-row">
+            <div>
+              <h1 class="page-title">My Uploaded Resources</h1>
+              <p id="my-uploads-summary" class="page-lead">Manage your uploaded study materials, edit details, or remove files.</p>
+            </div>
+            <a href="#upload" class="btn btn-primary">Upload New Resource</a>
+          </div>
+
+          <div id="my-uploads-grid" class="resources-grid"></div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <!-- 9. ADMIN DASHBOARD VIEW                                          -->
+      <!-- ================================================================ -->
+      <section id="view-admin" class="app-view hidden">
+        <div class="container page-container">
+          <!-- Restricted State -->
+          <div id="admin-access-denied" class="empty-state-box empty-state-error hidden">
+            <h2>Administrator Access Required</h2>
+            <p>
+              Only authorized administrators (<code>eng25cs0761@dsu.edu.in</code>) can access moderation controls and
+              student directories.
+            </p>
+            <a href="#dashboard" class="btn btn-primary">Return to Student Dashboard</a>
+          </div>
+
+          <!-- Authorized Admin Workspace -->
+          <div id="admin-workspace" class="hidden">
+            <div class="page-header-row">
+              <div>
+                <h1 class="page-title">Admin Moderation Dashboard</h1>
+                <p class="page-lead">Review uploaded study resources, manage approvals, and inspect student accounts.</p>
+              </div>
+              <div class="segmented-tabs" role="tablist" aria-label="Admin workspace sections">
+                <button type="button" class="segmented-tab admin-main-tab is-active" data-admin-tab="resources">
+                  Review Resources
+                </button>
+                <button type="button" class="segmented-tab admin-main-tab" data-admin-tab="students">
+                  Student Accounts
+                </button>
+              </div>
+            </div>
+
+            <!-- Admin KPI Strip -->
+            <div class="kpi-grid kpi-grid-4">
+              <div class="kpi-card">
+                <span class="kpi-label">Registered Students</span>
+                <strong id="admin-stat-students" class="kpi-value tabular-nums">0</strong>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">Total Uploaded Resources</span>
+                <strong id="admin-stat-resources" class="kpi-value tabular-nums">0</strong>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">Pending Review</span>
+                <strong id="admin-stat-pending" class="kpi-value tabular-nums">0</strong>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">Approved Resources</span>
+                <strong id="admin-stat-approved" class="kpi-value tabular-nums">0</strong>
+              </div>
+            </div>
+
+            <!-- Resources Review Panel -->
+            <div id="admin-panel-resources" class="admin-panel">
+              <div class="admin-toolbar">
+                <div class="segmented-tabs" role="tablist" aria-label="Filter resources by moderation status">
+                  <button type="button" class="segmented-tab admin-status-tab is-active" data-status="all">All</button>
+                  <button type="button" class="segmented-tab admin-status-tab" data-status="pending">Pending</button>
+                  <button type="button" class="segmented-tab admin-status-tab" data-status="approved">Approved</button>
+                  <button type="button" class="segmented-tab admin-status-tab" data-status="rejected">Rejected</button>
+                </div>
+              </div>
+              <div id="admin-resources-list" class="admin-resources-stack"></div>
+            </div>
+
+            <!-- Registered Students Table Panel -->
+            <div id="admin-panel-students" class="admin-panel hidden">
+              <div class="table-card">
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>College</th>
+                        <th>Semester</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-students-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ================================================================== -->
+    <!-- MODALS (EDIT RESOURCE & DELETE CONFIRMATION)                       -->
+    <!-- ================================================================== -->
+    <div id="edit-resource-modal" class="modal-backdrop hidden" aria-hidden="true" role="dialog" aria-labelledby="edit-modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2 id="edit-modal-title">Edit Study Material</h2>
+          <button type="button" class="modal-close-btn" data-close-modal="edit-resource-modal" aria-label="Close dialog">&times;</button>
+        </div>
+
+        <div id="edit-modal-alert" class="form-alert hidden" role="alert"></div>
+
+        <form id="edit-resource-form" class="stacked-form" novalidate>
+          <input type="hidden" id="edit-resource-id" />
+
+          <div class="form-group">
+            <label for="edit-title" class="form-label">Resource Title</label>
+            <input type="text" id="edit-title" class="form-input" maxlength="150" required />
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="edit-subject" class="form-label">Subject</label>
+              <input type="text" id="edit-subject" class="form-input" maxlength="100" required />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-semester" class="form-label">Semester</label>
+              <select id="edit-semester" class="form-select" required>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="6">Semester 6</option>
+                <option value="7">Semester 7</option>
+                <option value="8">Semester 8</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-category" class="form-label">Category</label>
+            <select id="edit-category" class="form-select" required>
+              <option value="Notes">Notes</option>
+              <option value="Assignments">Assignments</option>
+              <option value="Question Papers">Question Papers</option>
+              <option value="Study Materials">Study Materials</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-description" class="form-label">Description</label>
+            <textarea id="edit-description" class="form-textarea" rows="3" maxlength="1000" required></textarea>
+          </div>
+
+          <div class="form-actions-end">
+            <button type="button" class="btn btn-secondary" data-close-modal="edit-resource-modal">Cancel</button>
+            <button type="submit" id="edit-save-btn" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="delete-confirm-modal" class="modal-backdrop hidden" aria-hidden="true" role="dialog" aria-labelledby="delete-modal-title">
+      <div class="modal-dialog modal-dialog-sm">
+        <div class="modal-header">
+          <h2 id="delete-modal-title">Delete Study Material</h2>
+          <button type="button" class="modal-close-btn" data-close-modal="delete-confirm-modal" aria-label="Close dialog">&times;</button>
+        </div>
+        <p class="modal-body-text">
+          Are you sure you want to permanently delete <strong id="delete-target-title">this resource</strong>? This
+          removes the resource permanently.
+        </p>
+        <div class="form-actions-end">
+          <button type="button" class="btn btn-secondary" data-close-modal="delete-confirm-modal">Cancel</button>
+          <button type="button" id="confirm-delete-btn" class="btn btn-danger">Delete Permanently</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div class="footer-brand">
+          <span class="footer-wordmark">CampusConnect</span>
+          <p>Student Notes &amp; Resource Sharing Platform · Skill Enhancement Course (HTML, CSS &amp; JavaScript)</p>
+        </div>
+        <div class="footer-links">
+          <a href="#home">Home</a>
+          <a href="#about">About &amp; Setup</a>
+          <a href="#resources">Browse Resources</a>
+          <a href="#login">Student Login</a>
+          <a href="#register">Register</a>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/js/app.js"></script>
+  </body>
+</html>
